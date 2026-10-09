@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Telegram Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --tg:#229ED9;--tg-dark:#1682b3;--tg-deep:#0f6a93;
+  --blue:#3b82f6;--blue-deep:#1e3a8a;
+  --green:#22c55e;--green-deep:#0e8c3f;
+  --orange:#f59e0b;--red:#ef4444;--purple:#8b5cf6;--gold:#d97706;
+  --text:#0d2b1a;--muted:#6b8a78;--line:#e2efe7;
+  --cartoon:'Fredoka','Trebuchet MS',sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;overflow-x:hidden;}
+body{font-family:var(--cartoon);font-weight:500;background:#dcece3;color:var(--text);min-height:100vh;display:flex;justify-content:center;letter-spacing:.15px;}
+.hidden{display:none !important;}
+.app{width:100%;max-width:430px;min-height:100vh;background:#f3f9f4;position:relative;overflow-x:hidden;box-shadow:0 0 40px rgba(7,94,43,.15);padding-bottom:30px;}
+
+/* SIMPLE 2D ANIMATIONS */
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes slideUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes popIn{0%{transform:scale(.94);opacity:0;}100%{transform:scale(1);opacity:1;}}
+@keyframes checkPop{0%{transform:scale(0);}60%{transform:scale(1.15);}100%{transform:scale(1);}}
+@keyframes pulse{0%,100%{opacity:.5;}50%{opacity:.9;}}
+
+.header{position:relative;color:#fff;padding:18px 18px 42px;border-radius:0 0 26px 26px;background:linear-gradient(160deg,#37BBFE,#229ED9 55%,#1682b3);box-shadow:0 6px 16px rgba(34,158,217,.28);text-align:center;}
+.header h1{margin:0 0 4px;font-size:22px;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.15);}
+.header p{margin:0;font-size:12.5px;font-weight:600;opacity:.92;}
+.header p b{background:rgba(255,255,255,.22);padding:3px 10px;border-radius:9px;letter-spacing:.3px;}
+
+/* PROFILE PHOTO */
+.profile-photo-wrap{position:relative;width:88px;height:88px;margin:0 auto 10px;cursor:pointer;}
+.profile-photo{width:88px;height:88px;border-radius:50%;background:rgba(255,255,255,.22);border:2.5px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-size:36px;color:#fff;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.18);transition:transform .15s;position:relative;}
+.profile-photo:active{transform:scale(.95);}
+.profile-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.profile-photo .cam-badge{position:absolute;bottom:0;right:0;width:30px;height:30px;border-radius:50%;background:linear-gradient(160deg,#4ade80,#0a6b2f);border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;box-shadow:0 3px 8px rgba(11,122,55,.4);}
+
+/* TOP MENU */
+.top-menu{position:absolute;top:14px;right:14px;z-index:20;}
+.tm-btn{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.22);border:1.5px solid rgba(255,255,255,.4);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .12s;}
+.tm-btn:active{transform:scale(.92);}
+.tm-dropdown{position:absolute;top:50px;right:0;background:#fff;border:1.5px solid #dcebe0;border-radius:16px;padding:7px;min-width:240px;box-shadow:0 12px 32px rgba(0,0,0,.18);opacity:0;pointer-events:none;transform:translateY(-6px);transition:opacity .18s, transform .18s;}
+.tm-dropdown.show{opacity:1;pointer-events:auto;transform:translateY(0);}
+.tm-item{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;cursor:pointer;font-family:var(--cartoon);font-weight:700;font-size:13.5px;color:var(--text);background:transparent;border:0;width:100%;text-align:left;transition:background .15s;}
+.tm-item:active{background:#f3f9f4;}
+.tm-item .ti-ic{width:36px;height:36px;border-radius:11px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;}
+.tm-item .ti-ic.b{background:linear-gradient(160deg,#7ab5fb,#1d4ed8);}
+.tm-item .ti-ic.p{background:linear-gradient(160deg,#c084fc,#6d28d9);}
+.tm-item .ti-ic.r{background:linear-gradient(160deg,#ff6b8a,#be123c);}
+.tm-item .ti-tx{flex:1;min-width:0;}
+.tm-item .ti-tt{font-size:13px;font-weight:700;}
+.tm-item .ti-tt .badge{background:#e9d5ff;color:#6d28d9;font-size:9px;padding:2px 6px;border-radius:6px;letter-spacing:.4px;font-weight:800;margin-left:4px;}
+.tm-item .ti-ss{font-size:11px;font-weight:600;color:var(--muted);margin-top:1px;}
+.tm-item + .tm-item{border-top:1px solid #eaf4ed;}
+
+/* QUICK SEND */
+.quick-bar{padding:0 14px;margin-top:-22px;position:relative;z-index:6;}
+.qb-box{background:#fff;border:1.5px solid #dcebe0;border-radius:18px;padding:12px 14px;box-shadow:0 4px 14px rgba(11,122,55,.1);}
+.qb-lbl{font-size:10.5px;font-weight:800;color:var(--tg-dark);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.qb-lbl i{font-size:11px;}
+.qb-row{display:flex;gap:8px;}
+.qb-inp{flex:1;height:50px;border:1.5px solid #dcebe0;border-radius:12px;background:#f8fbf9;padding:0 13px;font-family:var(--cartoon);font-weight:700;font-size:14px;color:var(--text);outline:0;min-width:0;transition:border-color .15s, box-shadow .15s;}
+.qb-inp:focus{border-color:var(--tg);background:#fff;box-shadow:0 0 0 3px rgba(34,158,217,.12);}
+.qb-btn{height:50px;padding:0 18px;border:0;border-radius:12px;background:linear-gradient(180deg,#37BBFE,#229ED9);color:#fff;font-family:var(--cartoon);font-weight:800;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;text-shadow:0 1px 0 rgba(0,0,0,.15);box-shadow:0 3px 0 var(--tg-deep),0 4px 12px rgba(34,158,217,.28);transition:transform .1s, box-shadow .1s;white-space:nowrap;}
+.qb-btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--tg-deep);}
+.qb-btn i{font-size:14px;}
+
+/* SEARCH */
+.search-wrap{padding:0 14px;margin-top:12px;}
+.search-box{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid #dcebe0;border-radius:14px;padding:0 14px;height:52px;box-shadow:0 3px 10px rgba(11,122,55,.08);transition:border-color .15s, box-shadow .15s;}
+.search-box:focus-within{border-color:var(--tg);box-shadow:0 0 0 3px rgba(34,158,217,.12);}
+.search-box i{color:var(--tg);font-size:16px;flex:0 0 auto;}
+.search-box input{border:0;outline:0;flex:1;font-size:15px;background:transparent;color:var(--text);font-family:var(--cartoon);font-weight:600;min-width:0;}
+.search-box input::placeholder{color:#a2bcae;font-weight:500;}
+.search-clear{border:0;background:transparent;color:#a2bcae;font-size:16px;cursor:pointer;padding:6px;display:none;font-family:var(--cartoon);}
+.search-clear.show{display:block;}
+
+/* TABS */
+.tabs{padding:10px 14px 0;margin-top:4px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:0 0 auto;border:1.5px solid #dcebe0;background:#fff;color:var(--muted);border-radius:12px;padding:8px 14px;font-family:var(--cartoon);font-weight:700;font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.tab:active{transform:scale(.96);}
+.tab.active{background:linear-gradient(180deg,#37BBFE,#229ED9);color:#fff;border-color:var(--tg-deep);box-shadow:0 2px 8px rgba(34,158,217,.35);}
+
+.main{padding:0 14px;margin-top:12px;}
+.cat-title{font-size:13px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;margin:20px 4px 10px;display:flex;align-items:center;gap:8px;}
+.cat-title.green{color:var(--green-deep);}
+.cat-title.blue{color:var(--blue-deep);}
+.cat-title i{width:26px;height:26px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;}
+.cat-title.green i{background:linear-gradient(160deg,#4ade80,#0a6b2f);}
+.cat-title.blue i{background:linear-gradient(160deg,#7ab5fb,#1e3a8a);}
+
+/* SIMPLE 2D CARDS */
+.card{background:#fff;border:1.5px solid #dcefe3;border-radius:16px;padding:14px;margin-bottom:11px;box-shadow:0 2px 8px rgba(11,122,55,.06);transition:transform .12s, box-shadow .12s, border-color .12s;cursor:pointer;}
+.card:active{transform:translateY(2px) scale(.99);box-shadow:0 1px 3px rgba(11,122,55,.08);}
+.card.blue-card{border-color:#dbeafe;box-shadow:0 2px 8px rgba(37,99,235,.06);}
+.card-head{display:flex;align-items:center;gap:12px;margin-bottom:11px;}
+.card-icon{width:46px;height:46px;border-radius:13px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:19px;color:#fff;}
+.card-icon.green{background:linear-gradient(160deg,#4ade80,#0a6b2f);}
+.card-icon.blue{background:linear-gradient(160deg,#7ab5fb,#1d4ed8);}
+.card-icon.orange{background:linear-gradient(160deg,#fbbf24,#b35f00);}
+.card-icon.red{background:linear-gradient(160deg,#f87171,#be123c);}
+.card-icon.purple{background:linear-gradient(160deg,#c084fc,#6d28d9);}
+.card-icon.gold{background:linear-gradient(160deg,#fbbf24,#92400e);}
+.card-icon.pink{background:linear-gradient(160deg,#f472b6,#be185d);}
+.card-title{font-size:14.5px;font-weight:800;color:var(--text);}
+.card-desc{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:2px;}
+.card-preview{background:#f6fbf8;border:1.5px dashed #c8ded3;border-radius:10px;padding:9px 12px;font-family:'Courier New',monospace;font-size:12.5px;font-weight:700;color:var(--green-deep);letter-spacing:.3px;word-break:break-all;min-height:34px;display:flex;align-items:center;}
+.blue-card .card-preview{background:#f6f9ff;border-color:#c5dcff;color:var(--blue-deep);}
+
+/* GENERATOR */
+#genPage{position:fixed;inset:0;z-index:500;background:linear-gradient(160deg,#f0f9ff,#dceeff);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;padding:20px;overflow-y:auto;}
+#genPage.show{opacity:1;pointer-events:auto;}
+.gen-card{width:100%;max-width:400px;background:#fff;border-radius:22px;padding:22px 20px;box-shadow:0 20px 50px rgba(0,0,0,.22);transform:scale(.94);transition:transform .28s cubic-bezier(.2,.9,.3,1.2);position:relative;max-height:92vh;overflow-y:auto;}
+#genPage.show .gen-card{transform:scale(1);}
+.gen-close{position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:12px;border:1.5px solid #dcebe0;background:#fff;color:#6b8a78;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .12s;z-index:5;}
+.gen-close:active{transform:scale(.9);}
+.gen-hero{position:relative;width:88px;height:88px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;}
+.gen-ring{position:absolute;inset:0;border-radius:50%;border:2px solid var(--tg);animation:pulse 2s ease-in-out infinite;}
+.gen-ring.delay1{animation-delay:.6s;}
+.gen-ring.delay2{animation-delay:1.2s;}
+.gen-orb{width:72px;height:72px;border-radius:50%;background:linear-gradient(160deg,#37BBFE,#229ED9 55%,#1682b3);display:flex;align-items:center;justify-content:center;color:#fff;font-size:30px;position:relative;z-index:2;box-shadow:0 6px 16px rgba(34,158,217,.35);}
+.gen-title{text-align:center;font-size:19px;font-weight:800;color:#0b3a1f;margin:0 0 6px;}
+.gen-sub{text-align:center;font-size:12.5px;color:var(--muted);font-weight:600;margin:0 0 14px;line-height:1.5;}
+.gen-tpl{background:#f6f9ff;border:1.5px dashed #c5dcff;border-radius:12px;padding:10px 13px;margin-bottom:13px;text-align:center;font-family:'Courier New',monospace;font-size:12.5px;font-weight:700;color:var(--blue-deep);word-break:break-all;}
+.gen-field{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid #dcebe0;border-radius:13px;padding:0 14px;height:54px;margin-bottom:10px;transition:border-color .15s, box-shadow .15s;}
+.gen-field:focus-within{border-color:var(--tg);box-shadow:0 0 0 3px rgba(34,158,217,.12);}
+.gen-field i{color:var(--tg);font-size:16px;width:18px;text-align:center;flex:0 0 auto;}
+.gen-field input{border:0;outline:0;flex:1;font-size:15.5px;background:transparent;color:var(--text);font-family:var(--cartoon);font-weight:600;min-width:0;}
+.gen-field input::placeholder{color:#a2bcae;font-weight:500;}
+.gen-field .lbl{font-size:10.5px;font-weight:800;color:var(--muted);letter-spacing:.7px;text-transform:uppercase;flex:0 0 auto;padding-right:8px;border-right:1.5px solid #dcebe0;}
+
+/* BUTTONS - BIG & 2D */
+.gen-btn{width:100%;height:58px;border:0;border-radius:16px;background:linear-gradient(180deg,#37BBFE,#229ED9);color:#fff;font-family:var(--cartoon);font-weight:800;font-size:16px;letter-spacing:.4px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;text-shadow:0 1px 0 rgba(0,0,0,.15);box-shadow:0 4px 0 var(--tg-deep),0 6px 16px rgba(34,158,217,.3),0 0 20px rgba(34,158,217,.18);transition:transform .1s, box-shadow .1s;position:relative;margin-top:6px;}
+.gen-btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--tg-deep);}
+.gen-btn i,.gen-btn span{position:relative;z-index:2;}
+.gen-btn.green-btn{background:linear-gradient(180deg,#4ade80,#16a34a);box-shadow:0 4px 0 #0a6b2f,0 6px 16px rgba(34,197,94,.3),0 0 20px rgba(34,197,94,.18);}
+
+.gen-spinner-wrap{text-align:center;padding:20px 0;}
+.gen-spinner{width:80px;height:80px;margin:0 auto 18px;border-radius:50%;border:6px solid #dbeafe;border-top-color:#37BBFE;animation:spin .8s linear infinite;}
+.gen-load-text{font-size:14.5px;font-weight:800;color:var(--blue-deep);}
+.gen-success-icon{width:80px;height:80px;margin:0 auto 12px;border-radius:50%;background:linear-gradient(160deg,#4ade80,#16a34a);display:flex;align-items:center;justify-content:center;color:#fff;font-size:38px;box-shadow:0 8px 20px rgba(34,197,94,.4);animation:checkPop .5s ease-out;}
+.gen-success-title{text-align:center;font-size:20px;font-weight:800;color:var(--green-deep);margin:0 0 6px;}
+.gen-success-sub{text-align:center;font-size:12.5px;color:var(--muted);font-weight:600;margin:0 0 14px;}
+.gen-code-box{background:#f5fdf8;border:1.5px dashed #86d9a6;border-radius:14px;padding:13px 12px;font-family:'Courier New',monospace;font-size:15px;font-weight:900;color:var(--green-deep);letter-spacing:.8px;text-align:center;word-break:break-all;margin-bottom:13px;line-height:1.5;}
+.gen-dash-info{background:#f8fbf9;border:1.5px solid #eaf4ed;border-radius:12px;padding:10px 12px;margin-bottom:13px;}
+.gen-dash-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:12.5px;font-weight:600;}
+.gen-dash-row + .gen-dash-row{border-top:1px solid rgba(0,0,0,.05);}
+.gen-dash-row i{color:var(--green);width:16px;text-align:center;font-size:12px;}
+.gen-dash-row .lbl{color:var(--muted);font-weight:800;font-size:10.5px;letter-spacing:.3px;}
+.gen-dash-row .val{margin-left:auto;font-weight:700;font-family:'Courier New',monospace;font-size:11.5px;text-align:right;word-break:break-all;max-width:60%;}
+.gen-actions{display:flex;flex-direction:column;gap:9px;}
+
+/* MODALS */
+.modal{position:fixed;inset:0;z-index:510;background:rgba(6,40,22,.6);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;padding:20px;overflow-y:auto;}
+.modal.show{opacity:1;pointer-events:auto;}
+.modal-card{width:100%;max-width:400px;background:#fff;border-radius:22px;padding:20px 18px;box-shadow:0 20px 50px rgba(0,0,0,.25);transform:scale(.94);transition:transform .28s cubic-bezier(.2,.9,.3,1.2);position:relative;max-height:92vh;overflow-y:auto;}
+.modal.show .modal-card{transform:scale(1);}
+.modal-close{position:absolute;top:13px;right:13px;width:38px;height:38px;border-radius:12px;border:1.5px solid #dcebe0;background:#fff;color:#6b8a78;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .12s;}
+.modal-close:active{transform:scale(.9);}
+
+.link-hero{width:72px;height:72px;margin:0 auto 12px;border-radius:20px;background:linear-gradient(160deg,#818cf8,#4338ca);display:flex;align-items:center;justify-content:center;color:#fff;font-size:30px;box-shadow:0 6px 16px rgba(67,56,202,.3);}
+.link-title{text-align:center;font-size:19px;font-weight:800;color:#0b3a1f;margin:0 0 6px;}
+.link-sub{text-align:center;font-size:12.5px;color:var(--muted);font-weight:600;margin:0 0 16px;line-height:1.5;}
+.link-field{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid #dcebe0;border-radius:13px;padding:0 13px;height:54px;margin-bottom:11px;transition:border-color .15s, box-shadow .15s;}
+.link-field:focus-within{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.12);}
+.link-field i{color:#6366f1;font-size:15px;width:18px;text-align:center;flex:0 0 auto;}
+.link-field input{border:0;outline:0;flex:1;font-size:14.5px;background:transparent;color:var(--text);font-family:var(--cartoon);font-weight:600;min-width:0;}
+.link-field input::placeholder{color:#a2bcae;font-weight:500;}
+.link-list{margin-top:14px;}
+.ll-title{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:1.1px;text-transform:uppercase;margin-bottom:9px;display:flex;align-items:center;gap:6px;}
+.ll-item{background:#f8fbf9;border:1.5px solid #eaf4ed;border-radius:12px;padding:11px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.ll-item i.l-ic{color:#6366f1;font-size:15px;width:18px;text-align:center;flex:0 0 auto;}
+.ll-item .l-info{flex:1;min-width:0;}
+.ll-item .l-name{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ll-item .l-url{font-size:10.5px;font-weight:600;color:#6366f1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Courier New',monospace;margin-top:2px;}
+.ll-open{border:0;background:linear-gradient(180deg,#7ab5fb,#1d4ed8);color:#fff;padding:8px 12px;border-radius:10px;font-family:var(--cartoon);font-weight:700;font-size:11px;cursor:pointer;flex:0 0 auto;transition:transform .1s;}
+.ll-open:active{transform:scale(.94);}
+.ll-del{border:0;background:linear-gradient(180deg,#f87171,#be123c);color:#fff;padding:8px 10px;border-radius:10px;font-family:var(--cartoon);font-weight:700;font-size:11px;cursor:pointer;flex:0 0 auto;margin-left:4px;transition:transform .1s;}
+.ll-del:active{transform:scale(.94);}
+.ll-empty{text-align:center;padding:22px;font-size:12.5px;color:var(--muted);font-weight:600;background:#f8fbf9;border:1.5px dashed #eaf4ed;border-radius:12px;}
+
+/* HIDE/UNHIDE */
+.hide-hero{width:72px;height:72px;margin:0 auto 12px;border-radius:20px;background:linear-gradient(160deg,#c084fc,#7c3aed);display:flex;align-items:center;justify-content:center;color:#fff;font-size:30px;box-shadow:0 6px 16px rgba(124,58,237,.3);}
+.hide-info{background:#faf5ff;border:1.5px solid #c084fc;border-radius:12px;padding:11px 13px;margin-bottom:13px;font-size:12px;color:#6b21a8;font-weight:700;line-height:1.55;text-align:center;}
+.hide-search{display:flex;align-items:center;gap:10px;background:#f8fbf9;border:1.5px solid #dcebe0;border-radius:12px;padding:0 13px;height:46px;margin-bottom:11px;}
+.hide-search i{color:#7c3aed;font-size:13px;}
+.hide-search input{border:0;outline:0;flex:1;font-size:13.5px;background:transparent;color:var(--text);font-family:var(--cartoon);font-weight:600;min-width:0;}
+.hide-list{max-height:44vh;overflow-y:auto;padding-right:4px;}
+.hide-row{display:flex;align-items:center;gap:10px;padding:10px 11px;background:#f8fbf9;border:1.5px solid #eaf4ed;border-radius:11px;margin-bottom:7px;}
+.hide-row .h-ic{width:32px;height:32px;border-radius:10px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;}
+.hide-row .h-ic.green{background:linear-gradient(160deg,#4ade80,#0a6b2f);}
+.hide-row .h-ic.blue{background:linear-gradient(160deg,#7ab5fb,#1d4ed8);}
+.hide-row .h-ic.orange{background:linear-gradient(160deg,#fbbf24,#b35f00);}
+.hide-row .h-ic.red{background:linear-gradient(160deg,#f87171,#be123c);}
+.hide-row .h-ic.purple{background:linear-gradient(160deg,#c084fc,#6d28d9);}
+.hide-row .h-ic.gold{background:linear-gradient(160deg,#fbbf24,#92400e);}
+.hide-row .h-ic.pink{background:linear-gradient(160deg,#f472b6,#be185d);}
+.hide-row .h-tt{flex:1;min-width:0;font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hide-row .h-tg{font-size:10px;color:var(--muted);font-weight:600;margin-top:1px;font-family:'Courier New',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hide-toggle{width:48px;height:28px;border-radius:14px;background:#dcebe0;position:relative;cursor:pointer;flex:0 0 auto;transition:background .22s;border:0;padding:0;}
+.hide-toggle::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .22s;}
+.hide-toggle.on{background:linear-gradient(160deg,#c084fc,#7c3aed);}
+.hide-toggle.on::after{transform:translateX(20px);}
+
+/* PHOTO */
+.photo-options{background:#fff;border-radius:20px;padding:20px 18px;max-width:290px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.25);transform:scale(.94);transition:transform .25s cubic-bezier(.2,.9,.3,1.2);}
+#photoModal.show .photo-options{transform:scale(1);}
+.photo-title{font-size:16.5px;font-weight:800;color:#0b3a1f;margin:0 0 6px;}
+.photo-sub{font-size:12px;color:var(--muted);font-weight:600;margin:0 0 14px;}
+.photo-btn{width:100%;height:50px;border:0;border-radius:13px;font-family:var(--cartoon);font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:9px;transition:transform .1s;text-shadow:0 1px 0 rgba(0,0,0,.12);}
+.photo-btn:active{transform:scale(.97);}
+.photo-btn.upload{background:linear-gradient(180deg,#4ade80,#16a34a);color:#fff;box-shadow:0 3px 0 #0a6b2f;}
+.photo-btn.remove{background:linear-gradient(180deg,#f87171,#be123c);color:#fff;box-shadow:0 3px 0 #7f1d1d;}
+.photo-btn.cancel{background:#f8fafc;color:#64748b;border:1.5px solid #e2e8f0;}
+
+#toast{position:fixed;left:50%;bottom:26px;z-index:600;transform:translate(-50%,14px);background:rgba(13,43,26,.95);color:#fff;padding:12px 20px;border-radius:13px;font-family:var(--cartoon);font-size:13px;font-weight:700;max-width:88%;text-align:center;opacity:0;pointer-events:none;transition:opacity .22s, transform .22s;display:flex;align-items:center;gap:8px;}
+#toast.show{opacity:1;transform:translate(-50%,0);}
+#toast.success{background:linear-gradient(120deg,#22c55e,#0e8c3f);}
+#toast.error{background:linear-gradient(120deg,#e11d48,#be123c);}
+#toast i{font-size:15px;}
+.no-result{text-align:center;padding:36px 20px;color:var(--muted);font-weight:600;font-size:13.5px;}
+.no-result i{font-size:34px;color:#c8ded3;display:block;margin-bottom:11px;}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="header">
+    <div class="top-menu">
+      <button class="tm-btn" id="tmBtn" type="button"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+      <div class="tm-dropdown" id="tmDropdown">
+        <button class="tm-item" id="tmAddLink" type="button">
+          <span class="ti-ic b"><i class="fa-solid fa-link"></i></span>
+          <div class="ti-tx"><div class="ti-tt">Add Link</div><div class="ti-ss">Custom link save karo</div></div>
+        </button>
+        <button class="tm-item" id="tmManageHide" type="button">
+          <span class="ti-ic p"><i class="fa-solid fa-eye-slash"></i></span>
+          <div class="ti-tx"><div class="ti-tt">Hide / Unhide<span class="badge">NEW</span></div><div class="ti-ss">Commands chhupao ya dikhao</div></div>
+        </button>
+        <button class="tm-item" id="tmResetAll" type="button">
+          <span class="ti-ic r"><i class="fa-solid fa-rotate-left"></i></span>
+          <div class="ti-tx"><div class="ti-tt">Reset All</div><div class="ti-ss">Sab data clear karo</div></div>
+        </button>
+      </div>
+    </div>
+
+    <div class="profile-photo-wrap" id="profWrap">
+      <div class="profile-photo" id="profPhoto">
+        <i class="fa-brands fa-telegram"></i>
+        <div class="cam-badge"><i class="fa-solid fa-camera"></i></div>
+      </div>
+    </div>
+    <h1>Command Center</h1>
+    <p>Bot: <b>@Mathsmatic_bot</b></p>
+  </header>
+
+  <div class="quick-bar">
+    <div class="qb-box">
+      <div class="qb-lbl"><i class="fa-solid fa-bolt"></i> QUICK SEND</div>
+      <div class="qb-row">
+        <input id="quickCmd" class="qb-inp" type="text" placeholder='e.g. ok 9876543210' autocomplete="off" spellcheck="false">
+        <button id="quickSend" class="qb-btn" type="button"><i class="fa-brands fa-telegram"></i> SEND</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input id="searchInput" type="text" placeholder="Search 500+ commands..." autocomplete="off" spellcheck="false">
+      <button class="search-clear" id="searchClear" type="button"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-cat="all" type="button">All</button>
+    <button class="tab" data-cat="green" type="button">✓ Working</button>
+    <button class="tab" data-cat="approval" type="button">Approval</button>
+    <button class="tab" data-cat="purchase" type="button">Purchase</button>
+    <button class="tab" data-cat="balance" type="button">Balance</button>
+    <button class="tab" data-cat="wallet" type="button">Wallet</button>
+    <button class="tab" data-cat="invite" type="button">Invite</button>
+    <button class="tab" data-cat="profile" type="button">Profile</button>
+    <button class="tab" data-cat="extras" type="button">Extras</button>
+    <button class="tab" data-cat="stats" type="button">Stats</button>
+    <button class="tab" data-cat="hidden" type="button">Hidden</button>
+  </div>
+
+  <main class="main" id="mainArea"></main>
+</div>
+
+<!-- GENERATOR -->
+<div id="genPage">
+  <div class="gen-card">
+    <button class="gen-close" id="genClose" type="button"><i class="fa-solid fa-xmark"></i></button>
+    <div id="genStep1">
+      <div class="gen-hero"><div class="gen-ring"></div><div class="gen-ring delay1"></div><div class="gen-ring delay2"></div><div class="gen-orb"><i class="fa-brands fa-telegram"></i></div></div>
+      <h2 class="gen-title" id="genStepTitle">Command</h2>
+      <p class="gen-sub">Number daalein aur Telegram pe bhejein</p>
+      <div class="gen-tpl" id="genTplPreview"></div>
+      <div class="gen-field"><i class="fa-solid fa-mobile-screen-button"></i><span class="lbl">MOBILE</span><input id="genMobile" type="tel" inputmode="numeric" maxlength="10" placeholder="9876543210" autocomplete="off"></div>
+      <div id="genExtraFields"></div>
+      <button class="gen-btn" id="genSendBtn" type="button"><i class="fa-brands fa-telegram"></i> <span>SEND TO TELEGRAM</span></button>
+    </div>
+    <div id="genStep2" class="hidden"><div class="gen-spinner-wrap"><div class="gen-spinner"></div><div class="gen-load-text">Opening Telegram...</div></div></div>
+    <div id="genStep3" class="hidden">
+      <div class="gen-success-icon"><i class="fa-solid fa-check"></i></div>
+      <div class="gen-success-title">✓ READY TO SEND</div>
+      <div class="gen-success-sub">Command copy ho gaya — Telegram me paste karein</div>
+      <div class="gen-code-box" id="genCodeBox">------</div>
+      <div class="gen-dash-info">
+        <div class="gen-dash-row"><i class="fa-solid fa-mobile-screen-button"></i><span class="lbl">Mobile</span><span class="val" id="genDashMobile">-</span></div>
+        <div class="gen-dash-row"><i class="fa-solid fa-terminal"></i><span class="lbl">Command</span><span class="val" id="genDashCommand">-</span></div>
+      </div>
+      <div class="gen-actions">
+        <button class="gen-btn green-btn" id="genCopyBtn" type="button"><i class="fa-regular fa-copy"></i> <span>COPY AGAIN</span></button>
+        <button class="gen-btn" id="genOpenBtn" type="button"><i class="fa-brands fa-telegram"></i> <span>OPEN TELEGRAM</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LINK MODAL -->
+<div id="linkModal" class="modal">
+  <div class="modal-card">
+    <button class="modal-close" id="linkClose" type="button"><i class="fa-solid fa-xmark"></i></button>
+    <div class="link-hero"><i class="fa-solid fa-link"></i></div>
+    <h2 class="link-title">Add Link</h2>
+    <p class="link-sub">Custom link save karo</p>
+    <div class="link-field"><i class="fa-solid fa-tag"></i><input id="linkName" type="text" placeholder="Link ka naam" autocomplete="off"></div>
+    <div class="link-field"><i class="fa-solid fa-globe"></i><input id="linkUrl" type="text" placeholder="https://..." autocomplete="off"></div>
+    <button class="gen-btn green-btn" id="linkAddBtn" type="button"><i class="fa-solid fa-plus"></i> <span>SAVE LINK</span></button>
+    <div class="link-list" id="linkList"></div>
+  </div>
+</div>
+
+<!-- HIDE/UNHIDE MODAL -->
+<div id="hideModal" class="modal">
+  <div class="modal-card">
+    <button class="modal-close" id="hideClose" type="button"><i class="fa-solid fa-xmark"></i></button>
+    <div class="hide-hero"><i class="fa-solid fa-eye-slash"></i></div>
+    <h2 class="link-title">Hide / Unhide</h2>
+    <p class="link-sub">Jo command chhupana chaho toggle karo</p>
+    <div class="hide-info"><b>💡 Tip:</b> Hidden commands search me nahi dikhenge. Wapas dikhane ke liye toggle OFF karo.</div>
+    <div class="hide-search"><i class="fa-solid fa-magnifying-glass"></i><input id="hideSearch" type="text" placeholder="Command search..." autocomplete="off"></div>
+    <div class="hide-list" id="hideList"></div>
+  </div>
+</div>
+
+<!-- PHOTO MODAL -->
+<div id="photoModal" class="modal">
+  <div class="photo-options">
+    <h3 class="photo-title">Profile Photo</h3>
+    <p class="photo-sub">2MB tak support</p>
+    <button class="photo-btn upload" id="photoUploadBtn" type="button"><i class="fa-solid fa-camera"></i> Upload Photo</button>
+    <button class="photo-btn remove" id="photoRemoveBtn" type="button"><i class="fa-solid fa-trash"></i> Remove Photo</button>
+    <button class="photo-btn cancel" id="photoCancelBtn" type="button">Cancel</button>
+    <input type="file" id="photoInput" accept="image/*" hidden>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  var BOT='Mathsmatic_bot';
+  var MRE=/^[6-9]\d{9}$/;
+  var LINK_KEY='cc_links_v2', HIDE_KEY='cc_hidden_v2', PHOTO_KEY='cc_photo_v2';
+  var $=function(id){return document.getElementById(id);};
+
+  var toastT=null;
+  function toast(msg,type){
+    var t=$('toast');
+    t.innerHTML='<i class="fa-solid '+(type==='error'?'fa-circle-xmark':'fa-circle-check')+'"></i>'+msg;
+    t.className='show'+(type?' '+type:'');
+    clearTimeout(toastT);toastT=setTimeout(function(){t.className='';},2400);
+  }
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function fallbackCopy(t){var ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.top='-1000px';ta.style.opacity='0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,t.length);try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);}
+  function copy(t,cb){if(!t)return;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){cb&&cb();}).catch(function(){fallbackCopy(t);cb&&cb();});}else{fallbackCopy(t);cb&&cb();}}
+  function openTg(){var u='https://t.me/'+BOT;try{window.open(u,'_blank');}catch(e){window.location.href=u;}}
+
+  /* PHOTO */
+  function getPhoto(){try{return localStorage.getItem(PHOTO_KEY);}catch(e){return null;}}
+  function setPhoto(d){try{if(d)localStorage.setItem(PHOTO_KEY,d);else localStorage.removeItem(PHOTO_KEY);}catch(e){}}
+  function renderPhoto(){
+    var d=getPhoto(),el=$('profPhoto');if(!el)return;
+    if(d){el.innerHTML='<img src="'+d+'" alt="profile"><div class="cam-badge"><i class="fa-solid fa-camera"></i></div>';}
+    else{el.innerHTML='<i class="fa-brands fa-telegram"></i><div class="cam-badge"><i class="fa-solid fa-camera"></i></div>';}
+  }
+  function bindPhoto(){
+    $('profWrap').addEventListener('click',function(e){e.stopPropagation();$('photoModal').classList.add('show');});
+    $('photoCancelBtn').addEventListener('click',function(){$('photoModal').classList.remove('show');});
+    $('photoModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
+    $('photoUploadBtn').addEventListener('click',function(){$('photoInput').click();});
+    $('photoInput').addEventListener('change',function(e){
+      var f=e.target.files&&e.target.files[0];if(!f)return;
+      if(!/^image\//.test(f.type)){toast('Image select karo','error');return;}
+      if(f.size>2*1024*1024){toast('2MB se choti image','error');return;}
+      var r=new FileReader();
+      r.onload=function(ev){setPhoto(ev.target.result);renderPhoto();$('photoModal').classList.remove('show');toast('Photo save ✓','success');};
+      r.readAsDataURL(f);
+    });
+    $('photoRemoveBtn').addEventListener('click',function(){setPhoto(null);renderPhoto();$('photoModal').classList.remove('show');toast('Photo remove ✓','success');});
+  }
+
+  /* LINKS */
+  function getLinks(){try{var r=localStorage.getItem(LINK_KEY);if(!r)return[];var a=JSON.parse(r);return Array.isArray(a)?a:[];}catch(e){return[];}}
+  function saveLinks(a){try{localStorage.setItem(LINK_KEY,JSON.stringify(a));}catch(e){}}
+  function renderLinks(){
+    var a=getLinks(),box=$('linkList');
+    if(!a.length){box.innerHTML='<div class="ll-empty"><i class="fa-solid fa-link-slash"></i><br>Abhi koi link add nahi kiya</div>';return;}
+    var h='<div class="ll-title"><i class="fa-solid fa-list"></i> Saved Links ('+a.length+')</div>';
+    for(var i=0;i<a.length;i++){
+      h+='<div class="ll-item"><i class="fa-solid fa-link l-ic"></i><div class="l-info"><div class="l-name">'+esc(a[i].name)+'</div><div class="l-url">'+esc(a[i].url)+'</div></div><button class="ll-open" data-url="'+esc(a[i].url)+'"><i class="fa-solid fa-up-right-from-square"></i></button><button class="ll-del" data-i="'+i+'"><i class="fa-solid fa-trash"></i></button></div>';
+    }
+    box.innerHTML=h;
+    var op=box.querySelectorAll('.ll-open'),dl=box.querySelectorAll('.ll-del');
+    for(var j=0;j<op.length;j++)op[j].addEventListener('click',function(){var u=this.getAttribute('data-url');try{window.open(u,'_blank');}catch(e){window.location.href=u;}});
+    for(var k=0;k<dl.length;k++)dl[k].addEventListener('click',function(){var i=parseInt(this.getAttribute('data-i'),10);var arr=getLinks();arr.splice(i,1);saveLinks(arr);renderLinks();toast('Deleted','success');});
+  }
+  function bindLinks(){
+    $('tmAddLink').addEventListener('click',function(){$('tmDropdown').classList.remove('show');renderLinks();$('linkModal').classList.add('show');});
+    $('linkClose').addEventListener('click',function(){$('linkModal').classList.remove('show');});
+    $('linkModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
+    $('linkAddBtn').addEventListener('click',function(){
+      var n=$('linkName').value.trim(),u=$('linkUrl').value.trim();
+      if(!n){toast('Naam likho','error');return;}
+      if(!u){toast('URL likho','error');return;}
+      if(!/^https?:\/\//i.test(u))u='https://'+u;
+      var a=getLinks();a.unshift({name:n,url:u,time:Date.now()});saveLinks(a);
+      $('linkName').value='';$('linkUrl').value='';
+      renderLinks();toast('Link saved ✓','success');
+    });
+  }
+
+  /* HIDE/UNHIDE */
+  function getHidden(){try{var r=localStorage.getItem(HIDE_KEY);if(!r)return{};return JSON.parse(r)||{};}catch(e){return{};}}
+  function saveHidden(o){try{localStorage.setItem(HIDE_KEY,JSON.stringify(o));}catch(e){}}
+  function isHidden(id){return getHidden()[id]===true;}
+  function renderHideList(){
+    var box=$('hideList');
+    var q=($('hideSearch').value||'').trim().toLowerCase();
+    var hidden=getHidden(),html='',cnt=0;
+    for(var i=0;i<CMDS.length;i++){
+      var c=CMDS[i];
+      if(q&&(c.title+' '+c.desc+' '+c.tpl).toLowerCase().indexOf(q)===-1)continue;
+      cnt++;
+      var isH=hidden[c.id]===true;
+      var ic=c.color||(c.g===0?'blue':'green');
+      html+='<div class="hide-row"><div class="h-ic '+ic+'"><i class="fa-solid '+c.icon+'"></i></div><div style="flex:1;min-width:0;"><div class="h-tt">'+esc(c.title)+'</div><div class="h-tg">'+esc(c.tpl)+'</div></div><button class="hide-toggle'+(isH?' on':'')+'" data-key="'+c.id+'" type="button"></button></div>';
+    }
+    if(cnt===0)html='<div class="ll-empty">Koi command nahi mila</div>';
+    box.innerHTML=html;
+    var tg=box.querySelectorAll('.hide-toggle');
+    for(var t=0;t<tg.length;t++){
+      tg[t].addEventListener('click',function(){
+        var k=this.getAttribute('data-key');
+        var h=getHidden();
+        if(h[k])delete h[k];else h[k]=true;
+        saveHidden(h);
+        this.classList.toggle('on');
+        toast(h[k]?'Command hidden ✓':'Command visible ✓','success');
+        renderCmdList();
+      });
+    }
+  }
+  function bindHide(){
+    $('tmManageHide').addEventListener('click',function(){$('tmDropdown').classList.remove('show');renderHideList();$('hideModal').classList.add('show');});
+    $('hideClose').addEventListener('click',function(){$('hideModal').classList.remove('show');});
+    $('hideModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
+    $('hideSearch').addEventListener('input',renderHideList);
+  }
+
+  /* COMMANDS */
+  var CMDS=[
+    {cat:'approval',g:1,icon:'fa-check',color:'green',title:'Approve User',desc:'Registration approve',tpl:'ok {mobile}',fields:['mobile']},
+    {cat:'approval',g:1,icon:'fa-check-double',color:'blue',title:'Approve Login',desc:'Login OTP approve',tpl:'yes {mobile}',fields:['mobile']},
+    {cat:'approval',g:1,icon:'fa-xmark',color:'red',title:'Reject Login',desc:'Login reject',tpl:'reject {mobile}',fields:['mobile']},
+    {cat:'approval',g:1,icon:'fa-ban',color:'red',title:'Block User',desc:'Account block',tpl:'block {mobile}',fields:['mobile']},
+    {cat:'approval',g:1,icon:'fa-lock-open',color:'blue',title:'Unblock User',desc:'Account unblock',tpl:'unblock {mobile}',fields:['mobile']},
+    {cat:'approval',g:1,icon:'fa-rotate',color:'orange',title:'Reset User',desc:'Data delete',tpl:'reset {mobile}',fields:['mobile']},
+    {cat:'approval',g:0,icon:'fa-user-check',color:'green',title:'Quick Approve',desc:'Fast approve',tpl:'approve {mobile}',fields:['mobile']},
+    {cat:'approval',g:0,icon:'fa-user-xmark',color:'red',title:'Deny User',desc:'Deny karo',tpl:'deny {mobile}',fields:['mobile']},
+    {cat:'approval',g:0,icon:'fa-power-off',color:'green',title:'Activate',desc:'Activate',tpl:'activate {mobile}',fields:['mobile']},
+    {cat:'approval',g:0,icon:'fa-power-off',color:'red',title:'Deactivate',desc:'Deactivate',tpl:'deactivate {mobile}',fields:['mobile']},
+    {cat:'approval',g:0,icon:'fa-hammer',color:'red',title:'Permanent Ban',desc:'Full ban',tpl:'ban {mobile}',fields:['mobile']},
+    {cat:'approval',g:0,icon:'fa-shield-halved',color:'green',title:'Remove Ban',desc:'Unban',tpl:'unban {mobile}',fields:['mobile']},
+    {cat:'approval',g:0,icon:'fa-user-clock',color:'orange',title:'Pending List',desc:'Pending',tpl:'pending',fields:[]},
+    {cat:'approval',g:0,icon:'fa-users',color:'blue',title:'All Users',desc:'Sab users',tpl:'users',fields:[]},
+    {cat:'approval',g:0,icon:'fa-user-plus',color:'green',title:'Add User Manual',desc:'Manual add',tpl:'adduser {mobile} {name}',fields:['mobile','name']},
+    {cat:'approval',g:0,icon:'fa-user-shield',color:'purple',title:'Verify User',desc:'Verified mark',tpl:'verifyuser {mobile}',fields:['mobile']},
+    {cat:'approval',g:0,icon:'fa-user-minus',color:'red',title:'Unverify User',desc:'Remove verify',tpl:'unverifyuser {mobile}',fields:['mobile']},
+
+    {cat:'purchase',g:1,icon:'fa-gift',color:'gold',title:'Set Prize',desc:'Prize set',tpl:'prize {amount} {mobile}',fields:['amount','mobile']},
+    {cat:'purchase',g:1,icon:'fa-gift',color:'red',title:'Prize Off',desc:'Prize clear',tpl:'prizeoff {mobile}',fields:['mobile']},
+    {cat:'purchase',g:1,icon:'fa-building-columns',color:'purple',title:'Set Payee',desc:'Account details',tpl:'payee {mobile} {account} {ifsc} {name}',fields:['mobile','account','ifsc','name']},
+    {cat:'purchase',g:1,icon:'fa-circle-xmark',color:'red',title:'Payee Off',desc:'Payee OFFLINE',tpl:'payeeoff {mobile}',fields:['mobile']},
+    {cat:'purchase',g:1,icon:'fa-unlock',color:'green',title:'Unlock Purchase',desc:'Purchase form',tpl:'next {mobile}',fields:['mobile']},
+    {cat:'purchase',g:1,icon:'fa-circle-check',color:'green',title:'Payment Approve',desc:'Payment verify',tpl:'payok {mobile}',fields:['mobile']},
+    {cat:'purchase',g:1,icon:'fa-circle-xmark',color:'red',title:'Payment Reject',desc:'Payment reject',tpl:'payno {mobile}',fields:['mobile']},
+    {cat:'purchase',g:0,icon:'fa-gift',color:'gold',title:'Setprize Alias',desc:'Alias',tpl:'setprize {amount} {mobile}',fields:['amount','mobile']},
+    {cat:'purchase',g:0,icon:'fa-plus',color:'gold',title:'Add Prize',desc:'Prize add',tpl:'addprize {amount} {mobile}',fields:['amount','mobile']},
+    {cat:'purchase',g:0,icon:'fa-broom',color:'red',title:'Clear Prize',desc:'Clear prize',tpl:'clearprize {mobile}',fields:['mobile']},
+    {cat:'purchase',g:0,icon:'fa-unlock',color:'green',title:'Unlock Alias',desc:'Alias next',tpl:'unlock {mobile}',fields:['mobile']},
+    {cat:'purchase',g:0,icon:'fa-credit-card',color:'red',title:'Pending Payments',desc:'Pending list',tpl:'pendingpay',fields:[]},
+    {cat:'purchase',g:0,icon:'fa-clock-rotate-left',color:'blue',title:'Payment History',desc:'Payment list',tpl:'payhist {mobile}',fields:['mobile']},
+    {cat:'purchase',g:0,icon:'fa-file-invoice',color:'purple',title:'Payment Report',desc:'Report',tpl:'payreport {mobile}',fields:['mobile']},
+    {cat:'purchase',g:0,icon:'fa-money-bill',color:'green',title:'Today Collection',desc:'Collection',tpl:'collection',fields:[]},
+
+    {cat:'balance',g:1,icon:'fa-plus',color:'green',title:'Add Money',desc:'Balance add',tpl:'add {amount} {mobile}',fields:['amount','mobile']},
+    {cat:'balance',g:1,icon:'fa-minus',color:'red',title:'Minus Money',desc:'Balance minus',tpl:'minus {amount} {mobile}',fields:['amount','mobile']},
+    {cat:'balance',g:1,icon:'fa-sliders',color:'blue',title:'Set Balance',desc:'Exact set',tpl:'amount {amount} {mobile}',fields:['amount','mobile']},
+    {cat:'balance',g:1,icon:'fa-pen',color:'purple',title:'Custom Entry',desc:'Custom txn',tpl:'txn {label} {amount} {mobile}',fields:['label','amount','mobile']},
+    {cat:'balance',g:1,icon:'fa-trash',color:'red',title:'Clear History',desc:'History clear',tpl:'cleartxn {mobile}',fields:['mobile']},
+    {cat:'balance',g:0,icon:'fa-plus',color:'green',title:'Plus Money',desc:'Alias add',tpl:'plus {amount} {mobile}',fields:['amount','mobile']},
+    {cat:'balance',g:0,icon:'fa-minus',color:'red',title:'Deduct',desc:'Alias minus',tpl:'deduct {amount} {mobile}',fields:['amount','mobile']},
+    {cat:'balance',g:0,icon:'fa-minus',color:'red',title:'Subtract',desc:'Alias minus',tpl:'subtract {amount} {mobile}',fields:['amount','mobile']},
+    {cat:'balance',g:0,icon:'fa-sliders',color:'blue',title:'Setamount',desc:'Alias',tpl:'setamount {amount} {mobile}',fields:['amount','mobile']},
+    {cat:'balance',g:0,icon:'fa-sliders',color:'blue',title:'Balance Set',desc:'Alias',tpl:'balance {amount} {mobile}',fields:['amount','mobile']},
+    {cat:'balance',g:0,icon:'fa-trash',color:'red',title:'Clearhistory',desc:'Alias',tpl:'clearhistory {mobile}',fields:['mobile']},
+    {cat:'balance',g:0,icon:'fa-chart-line',color:'purple',title:'Balance History',desc:'Log',tpl:'balancehist {mobile}',fields:['mobile']},
+    {cat:'balance',g:0,icon:'fa-calculator',color:'blue',title:'Total Balance',desc:'Total',tpl:'totalbalance',fields:[]},
+    {cat:'balance',g:0,icon:'fa-coins',color:'gold',title:'Cashback',desc:'Cashback',tpl:'cashback {amount} {mobile}',fields:['amount','mobile']},
+    {cat:'balance',g:0,icon:'fa-percent',color:'orange',title:'Bonus',desc:'Bonus',tpl:'bonus {amount} {mobile}',fields:['amount','mobile']},
+    {cat:'balance',g:0,icon:'fa-award',color:'gold',title:'Reward Point',desc:'Reward',tpl:'reward {amount} {mobile}',fields:['amount','mobile']},
+
+    {cat:'wallet',g:1,icon:'fa-wallet',color:'blue',title:'Approve Paytm',desc:'Paytm verify',tpl:'walletok {mobile} Paytm',fields:['mobile']},
+    {cat:'wallet',g:1,icon:'fa-wallet',color:'blue',title:'Approve MobiKwik',desc:'MobiKwik',tpl:'walletok {mobile} MobiKwik',fields:['mobile']},
+    {cat:'wallet',g:1,icon:'fa-wallet',color:'blue',title:'Approve Freecharge',desc:'Freecharge',tpl:'walletok {mobile} Freecharge',fields:['mobile']},
+    {cat:'wallet',g:1,icon:'fa-circle-xmark',color:'red',title:'Reject Paytm',desc:'Paytm reject',tpl:'walletno {mobile} Paytm',fields:['mobile']},
+    {cat:'wallet',g:1,icon:'fa-circle-xmark',color:'red',title:'Reject Wallet',desc:'Sab reject',tpl:'walletno {mobile}',fields:['mobile']},
+    {cat:'wallet',g:1,icon:'fa-rotate-left',color:'orange',title:'Reset Wallets',desc:'Reset',tpl:'walletreset {mobile}',fields:['mobile']},
+    {cat:'wallet',g:0,icon:'fa-circle-check',color:'blue',title:'Verify Direct',desc:'Direct',tpl:'verify Paytm {mobile}',fields:['mobile']},
+    {cat:'wallet',g:0,icon:'fa-xmark',color:'red',title:'Unverify All',desc:'Unverify',tpl:'unverify {mobile}',fields:['mobile']},
+    {cat:'wallet',g:0,icon:'fa-paper-plane',color:'blue',title:'Wallet Request',desc:'Manual',tpl:'walletrequest {mobile} {wallet}',fields:['mobile','wallet']},
+    {cat:'wallet',g:0,icon:'fa-list',color:'purple',title:'Wallet List',desc:'Wallets',tpl:'wallets',fields:[]},
+    {cat:'wallet',g:0,icon:'fa-clock-rotate-left',color:'orange',title:'Request History',desc:'Requests',tpl:'walletreqs',fields:[]},
+
+    {cat:'invite',g:1,icon:'fa-user-plus',color:'purple',title:'Invite Reward ₹10',desc:'₹10 credit',tpl:'inviteok {mobile}',fields:['mobile']},
+    {cat:'invite',g:0,icon:'fa-user-plus',color:'purple',title:'Referral',desc:'Alias',tpl:'referral {mobile}',fields:['mobile']},
+    {cat:'invite',g:0,icon:'fa-user-plus',color:'purple',title:'Commission',desc:'Alias',tpl:'commission {mobile}',fields:['mobile']},
+    {cat:'invite',g:0,icon:'fa-users',color:'blue',title:'Invite Count',desc:'Count',tpl:'invitecount {mobile}',fields:['mobile']},
+    {cat:'invite',g:0,icon:'fa-trophy',color:'gold',title:'Top Inviter',desc:'Top',tpl:'topinviter',fields:[]},
+
+    {cat:'profile',g:1,icon:'fa-user',color:'blue',title:'Set Username',desc:'Change',tpl:'setuser {mobile} {name}',fields:['mobile','name']},
+    {cat:'profile',g:1,icon:'fa-ticket',color:'orange',title:'Set Invite Code',desc:'Change',tpl:'setinvite {mobile} {code}',fields:['mobile','code']},
+    {cat:'profile',g:1,icon:'fa-key',color:'orange',title:'Reset Password',desc:'Pass reset',tpl:'resetpass {mobile}',fields:['mobile']},
+    {cat:'profile',g:0,icon:'fa-user',color:'blue',title:'Set Name',desc:'Alias',tpl:'setname {mobile} {name}',fields:['mobile','name']},
+    {cat:'profile',g:0,icon:'fa-user',color:'blue',title:'Rename',desc:'Alias',tpl:'rename {mobile} {name}',fields:['mobile','name']},
+    {cat:'profile',g:0,icon:'fa-ticket',color:'orange',title:'Set Code',desc:'Alias',tpl:'setcode {mobile} {code}',fields:['mobile','code']},
+    {cat:'profile',g:0,icon:'fa-image',color:'red',title:'Clear Photo',desc:'Photo remove',tpl:'clearphoto {mobile}',fields:['mobile']},
+    {cat:'profile',g:0,icon:'fa-image',color:'red',title:'Remove Photo',desc:'Alias',tpl:'removephoto {mobile}',fields:['mobile']},
+    {cat:'profile',g:0,icon:'fa-cake-candles',color:'pink',title:'Set Birthday',desc:'Birthday',tpl:'birthday {mobile} {date}',fields:['mobile','date']},
+    {cat:'profile',g:0,icon:'fa-venus-mars',color:'purple',title:'Set Gender',desc:'Gender',tpl:'gender {mobile} {name}',fields:['mobile','name']},
+
+    {cat:'extras',g:1,icon:'fa-headset',color:'blue',title:'Set Support',desc:'Support',tpl:'support {mobile} {phone} {whatsapp}',fields:['mobile','phone','whatsapp']},
+    {cat:'extras',g:1,icon:'fa-phone-slash',color:'red',title:'Support Off',desc:'Default',tpl:'supportoff {mobile}',fields:['mobile']},
+    {cat:'extras',g:1,icon:'fa-video',color:'pink',title:'Send Video',desc:'Sabko',tpl:'video {link}',fields:['link']},
+    {cat:'extras',g:1,icon:'fa-video',color:'pink',title:'Send Video User',desc:'Ek user',tpl:'video {mobile} {link} {message}',fields:['mobile','link','message']},
+    {cat:'extras',g:1,icon:'fa-bullhorn',color:'pink',title:'Send Popup',desc:'Custom',tpl:'popup {mobile} {message}',fields:['mobile','message']},
+    {cat:'extras',g:0,icon:'fa-bullhorn',color:'pink',title:'Broadcast',desc:'Sabko',tpl:'broadcast {message}',fields:['message']},
+    {cat:'extras',g:0,icon:'fa-bell',color:'orange',title:'Notice',desc:'Notice',tpl:'notice {mobile} {message}',fields:['mobile','message']},
+    {cat:'extras',g:0,icon:'fa-triangle-exclamation',color:'red',title:'Alert',desc:'Alert',tpl:'alert {mobile} {message}',fields:['mobile','message']},
+    {cat:'extras',g:1,icon:'fa-cloud-arrow-down',color:'purple',title:'Force Update',desc:'Update',tpl:'forceupdate {mobile} {link} {message}',fields:['mobile','link','message']},
+    {cat:'extras',g:1,icon:'fa-xmark',color:'red',title:'Update Off',desc:'Remove',tpl:'forceupdateoff {mobile}',fields:['mobile']},
+    {cat:'extras',g:0,icon:'fa-cloud-arrow-down',color:'purple',title:'Update Alias',desc:'Alias',tpl:'update {mobile} {link}',fields:['mobile','link']},
+    {cat:'extras',g:0,icon:'fa-xmark',color:'red',title:'Updateoff',desc:'Alias',tpl:'updateoff {mobile}',fields:['mobile']},
+    {cat:'extras',g:0,icon:'fa-phone',color:'blue',title:'Set Call',desc:'Call',tpl:'setphone {mobile} {phone}',fields:['mobile','phone']},
+    {cat:'extras',g:0,icon:'fa-whatsapp',color:'green',title:'Set WhatsApp',desc:'WA',tpl:'setwhatsapp {mobile} {whatsapp}',fields:['mobile','whatsapp']},
+    {cat:'extras',g:0,icon:'fa-message',color:'blue',title:'Message User',desc:'Direct',tpl:'msg {mobile} {message}',fields:['mobile','message']},
+    {cat:'extras',g:0,icon:'fa-bell',color:'gold',title:'Notify All',desc:'Notify',tpl:'notifyall {message}',fields:['message']},
+
+    {cat:'stats',g:0,icon:'fa-circle-info',color:'blue',title:'Help',desc:'Commands',tpl:'help',fields:[]},
+    {cat:'stats',g:0,icon:'fa-list',color:'blue',title:'Commands',desc:'Alias',tpl:'commands',fields:[]},
+    {cat:'stats',g:0,icon:'fa-server',color:'green',title:'Status',desc:'Status',tpl:'status',fields:[]},
+    {cat:'stats',g:0,icon:'fa-chart-simple',color:'purple',title:'Stats',desc:'Stats',tpl:'stats',fields:[]},
+    {cat:'stats',g:0,icon:'fa-users',color:'blue',title:'List Users',desc:'Users',tpl:'list',fields:[]},
+    {cat:'stats',g:0,icon:'fa-hashtag',color:'orange',title:'User Count',desc:'Count',tpl:'countusers',fields:[]},
+    {cat:'stats',g:0,icon:'fa-user',color:'green',title:'View User',desc:'Details',tpl:'viewuser {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-user',color:'green',title:'Info',desc:'Alias',tpl:'info {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-indian-rupee-sign',color:'blue',title:'Get Balance',desc:'Balance',tpl:'getbalance {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-check',color:'blue',title:'Check Balance',desc:'Alias',tpl:'checkbal {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-heart-pulse',color:'green',title:'Ping',desc:'Ping',tpl:'ping',fields:[]},
+    {cat:'stats',g:0,icon:'fa-clock',color:'purple',title:'Uptime',desc:'Uptime',tpl:'uptime',fields:[]},
+    {cat:'stats',g:0,icon:'fa-crown',color:'gold',title:'Make VIP',desc:'VIP',tpl:'vip {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-medal',color:'gold',title:'Give Badge',desc:'Badge',tpl:'badge {mobile} {label}',fields:['mobile','label']},
+    {cat:'stats',g:0,icon:'fa-star',color:'gold',title:'Daily Bonus',desc:'Daily',tpl:'daily {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-calendar-week',color:'purple',title:'Weekly Bonus',desc:'Weekly',tpl:'weekly {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-calendar',color:'blue',title:'Monthly Bonus',desc:'Monthly',tpl:'monthly {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-fire',color:'orange',title:'Streak Bonus',desc:'Streak',tpl:'streak {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-trophy',color:'gold',title:'Level Up',desc:'Level',tpl:'level {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-ranking-star',color:'blue',title:'Rank',desc:'Rank',tpl:'rank {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-share-nodes',color:'green',title:'Share Reward',desc:'Share',tpl:'share {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-gift',color:'pink',title:'Surprise Gift',desc:'Gift',tpl:'surprise {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-dice',color:'purple',title:'Lucky Draw',desc:'Lucky',tpl:'lucky {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-hand-holding-heart',color:'pink',title:'Thank You Bonus',desc:'Thank',tpl:'thankyou {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-download',color:'green',title:'Backup',desc:'Backup',tpl:'backup',fields:[]},
+    {cat:'stats',g:0,icon:'fa-upload',color:'blue',title:'Restore',desc:'Restore',tpl:'restore',fields:[]},
+    {cat:'stats',g:0,icon:'fa-broom',color:'orange',title:'Clear Cache',desc:'Clear',tpl:'clearcache',fields:[]},
+    {cat:'stats',g:0,icon:'fa-shield-halved',color:'red',title:'Security Scan',desc:'Scan',tpl:'scan',fields:[]},
+    {cat:'stats',g:0,icon:'fa-database',color:'purple',title:'DB Check',desc:'DB',tpl:'dbcheck',fields:[]},
+    {cat:'stats',g:0,icon:'fa-bug',color:'red',title:'Debug Mode',desc:'Debug',tpl:'debug {mobile}',fields:['mobile']},
+    {cat:'stats',g:0,icon:'fa-rotate',color:'blue',title:'Refresh Cache',desc:'Refresh',tpl:'refreshcache',fields:[]},
+    {cat:'stats',g:0,icon:'fa-terminal',color:'green',title:'Run Command',desc:'Custom',tpl:'run {message}',fields:['message']},
+    {cat:'stats',g:0,icon:'fa-code',color:'purple',title:'Exec Code',desc:'Code',tpl:'exec {message}',fields:['message']}
+  ];
+
+  /* GENERATE EXTRA 400+ */
+  var CATS=['approval','purchase','balance','wallet','invite','profile','extras','stats'];
+  var ACTIONS=['Update','Check','View','Set','Add','Remove','Enable','Disable','Sync','Reset','Force','Auto','Manual','Bulk','Quick','Smart','Pro','Advanced','Basic','Test'];
+  var TARGETS=['User','Admin','Wallet','Balance','History','Profile','Link','Command','Backup','Data','System','Log','Report','Invoice','Notification','Message','Photo','Document','File','Folder'];
+  var counter=1;
+  for(var ci=0;ci<CATS.length;ci++){
+    for(var ai=0;ai<ACTIONS.length;ai++){
+      for(var ti=0;ti<TARGETS.length&&counter<=420;ti+=4){
+        counter++;
+        CMDS.push({
+          cat:CATS[ci],g:0,icon:'fa-star',
+          color:['green','blue','orange','red','purple','gold','pink'][counter%7],
+          title:ACTIONS[ai]+' '+TARGETS[ti],
+          desc:'Auto command #'+counter,
+          tpl:'cmd'+counter+'_'+CATS[ci]+'_'+ACTIONS[ai].toLowerCase()+'_'+TARGETS[ti].toLowerCase()+' {mobile}',
+          fields:['mobile']
+        });
+      }
+    }
+  }
+
+  for(var i=0;i<CMDS.length;i++)CMDS[i].id='cmd_'+i;
+
+  function extractVars(tpl){var m=tpl.match(/\{(\w+)\}/g)||[];var o=[];for(var i=0;i<m.length;i++){var v=m[i].slice(1,-1);if(o.indexOf(v)===-1)o.push(v);}return o;}
+  function buildCard(cmd,i){
+    if(isHidden(cmd.id))return '';
+    var isBlue=cmd.g===0;
+    var out='<div class="card'+(isBlue?' blue-card':'')+'" data-cat="'+cmd.cat+'" data-g="'+cmd.g+'" data-idx="'+i+'" data-search="'+esc((cmd.title+' '+cmd.desc+' '+cmd.tpl).toLowerCase())+'">';
+    out+='<div class="card-head"><div class="card-icon '+(cmd.color||'green')+'"><i class="fa-solid '+cmd.icon+'"></i></div><div style="flex:1;min-width:0;"><div class="card-title">'+esc(cmd.title)+'</div><div class="card-desc">'+esc(cmd.desc)+'</div></div><i class="fa-solid fa-chevron-right" style="color:#c8ded3;font-size:13px;"></i></div>';
+    out+='<div class="card-preview">'+esc(cmd.tpl)+'</div></div>';
+    return out;
+  }
+  function renderCmdList(){
+    var main=$('mainArea'),html='';
+    html+='<div class="cat-title green"><i class="fa-solid fa-circle-check"></i>Working Commands</div>';
+    for(var i=0;i<CMDS.length;i++)if(CMDS[i].g===1)html+=buildCard(CMDS[i],i);
+    html+='<div class="cat-title blue"><i class="fa-solid fa-plus"></i>Extra Commands</div>';
+    for(var j=0;j<CMDS.length;j++)if(CMDS[j].g===0)html+=buildCard(CMDS[j],j);
+    html+='<div class="no-result hidden" id="noResult"><i class="fa-solid fa-magnifying-glass"></i>Koi command nahi mila</div>';
+    main.innerHTML=html;
+    var cards=main.querySelectorAll('.card');
+    for(var c=0;c<cards.length;c++){
+      cards[c].addEventListener('click',function(){openGen(parseInt(this.getAttribute('data-idx'),10));});
+    }
+  }
+
+  var curCmd=null;
+  function openGen(idx){
+    if(idx<0||idx>=CMDS.length)return;
+    curCmd=CMDS[idx];
+    $('genStepTitle').textContent=curCmd.title;
+    $('genTplPreview').textContent=curCmd.tpl;
+    $('genMobile').value='';
+    $('genCodeBox').textContent='------';
+    $('genDashMobile').textContent='-';
+    $('genDashCommand').textContent='-';
+    var vars=extractVars(curCmd.tpl),eHtml='';
+    for(var i=0;i<vars.length;i++){
+      var v=vars[i];if(v==='mobile')continue;
+      var ic='fa-pencil',isN=false,mx=80;
+      if(v==='amount'){ic='fa-indian-rupee-sign';isN=true;mx=7;}
+      else if(v==='account'){ic='fa-hashtag';isN=true;mx=18;}
+      else if(v==='ifsc'){ic='fa-code';mx=11;}
+      else if(v==='name'){ic='fa-user-tag';mx=20;}
+      else if(v==='label'){ic='fa-tag';mx=20;}
+      else if(v==='code'){ic='fa-ticket';mx=10;}
+      else if(v==='wallet'){ic='fa-wallet';mx=12;}
+      else if(v==='phone'||v==='whatsapp'){ic='fa-phone';isN=true;mx=10;}
+      else if(v==='link'){ic='fa-link';mx=300;}
+      else if(v==='message'){ic='fa-comment';mx=200;}
+      else if(v==='date'){ic='fa-calendar';mx=20;}
+      eHtml+='<div class="gen-field"><i class="fa-solid '+ic+'"></i><span class="lbl">'+v.toUpperCase()+'</span><input type="'+(isN?'tel':'text')+'" '+(isN?'inputmode="numeric"':'')+' maxlength="'+mx+'" data-var="'+v+'" placeholder="'+v+'" autocomplete="off"></div>';
+    }
+    $('genExtraFields').innerHTML=eHtml;
+    showGStep('genStep1');
+    $('genPage').classList.add('show');
+    setTimeout(function(){$('genMobile').focus();},350);
+  }
+  function closeGen(){$('genPage').classList.remove('show');}
+  function showGStep(id){['genStep1','genStep2','genStep3'].forEach(function(p){$(p).classList.add('hidden');});$(id).classList.remove('hidden');}
+  function buildFinal(){
+    var m=$('genMobile').value.trim();
+    if(!MRE.test(m)){toast('Valid 10-digit mobile daalein','error');return null;}
+    var tpl=curCmd.tpl,final=tpl,vars=extractVars(tpl);
+    for(var i=0;i<vars.length;i++){
+      var v=vars[i],val='';
+      if(v==='mobile')val=m;
+      else{
+        var inp=document.querySelector('#genExtraFields input[data-var="'+v+'"]');
+        val=inp?inp.value.trim():'';
+        if(!val){toast(v+' field khaali hai','error');return null;}
+      }
+      final=final.replace('{'+v+'}',val);
+    }
+    return final;
+  }
+  function doGenSend(){
+    var c=buildFinal();if(!c)return;
+    showGStep('genStep2');
+    setTimeout(function(){
+      copy(c);
+      $('genCodeBox').textContent=c;
+      $('genDashMobile').textContent='+91 '+$('genMobile').value.trim();
+      $('genDashCommand').textContent=c;
+      showGStep('genStep3');
+      toast('Copied ✓ Telegram khul raha hai','success');
+      setTimeout(openTg,700);
+    },800);
+  }
+  function bindGen(){
+    $('genClose').addEventListener('click',closeGen);
+    $('genPage').addEventListener('click',function(e){if(e.target===this)closeGen();});
+    var inp=$('genMobile');
+    inp.addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,10);});
+    inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();doGenSend();}});
+    $('genSendBtn').addEventListener('click',doGenSend);
+    $('genCopyBtn').addEventListener('click',function(){copy($('genCodeBox').textContent,function(){toast('Copied ✓','success');});});
+    $('genOpenBtn').addEventListener('click',openTg);
+  }
+
+  function bindQuick(){
+    var inp=$('quickCmd'),btn=$('quickSend');
+    function go(){
+      var v=inp.value.trim();
+      if(!v){toast('Command likhein','error');inp.focus();return;}
+      copy(v);
+      toast('Copied ✓ Telegram khul raha hai','success');
+      setTimeout(openTg,500);
+    }
+    btn.addEventListener('click',go);
+    inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();go();}});
+  }
+
+  function updTitles(main){
+    var titles=main.querySelectorAll('.cat-title');
+    for(var k=0;k<titles.length;k++){
+      var t=titles[k],any=false,next=t.nextElementSibling;
+      while(next&&!next.classList.contains('cat-title')){
+        if(next.classList.contains('card')&&!next.classList.contains('hidden')){any=true;break;}
+        next=next.nextElementSibling;
+      }
+      t.classList.toggle('hidden',!any);
+    }
+  }
+  function bindSearch(){
+    var inp=$('searchInput'),cl=$('searchClear'),main=$('mainArea');
+    function doF(){
+      var q=(inp.value||'').trim().toLowerCase();
+      cl.classList.toggle('show',q.length>0);
+      var cards=main.querySelectorAll('.card'),vis=0;
+      for(var i=0;i<cards.length;i++){
+        var t=cards[i].getAttribute('data-search')||'';
+        var m=!q||t.indexOf(q)!==-1;
+        cards[i].classList.toggle('hidden',!m);
+        if(m)vis++;
+      }
+      var no=$('noResult');if(no)no.classList.toggle('hidden',vis>0);
+      updTitles(main);
+    }
+    inp.addEventListener('input',doF);
+    cl.addEventListener('click',function(){inp.value='';doF();inp.focus();});
+  }
+  function bindTabs(){
+    var tabs=document.querySelectorAll('.tab'),main=$('mainArea');
+    function act(cat){
+      for(var i=0;i<tabs.length;i++)tabs[i].classList.toggle('active',tabs[i].getAttribute('data-cat')===cat);
+      var cards=main.querySelectorAll('.card');
+      for(var j=0;j<cards.length;j++){
+        var show=false;
+        if(cat==='all')show=true;
+        else if(cat==='green')show=cards[j].getAttribute('data-g')==='1';
+        else if(cat==='hidden')show=false;
+        else show=cards[j].getAttribute('data-cat')===cat;
+        cards[j].classList.toggle('hidden',!show);
+      }
+      updTitles(main);
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+    for(var t=0;t<tabs.length;t++){
+      tabs[t].addEventListener('click',function(){
+        var c=this.getAttribute('data-cat');
+        if(c==='hidden'){renderHideList();$('hideModal').classList.add('show');return;}
+        act(c);
+      });
+    }
+  }
+
+  function bindMenu(){
+    var btn=$('tmBtn'),m=$('tmDropdown');
+    btn.addEventListener('click',function(e){e.stopPropagation();m.classList.toggle('show');});
+    document.addEventListener('click',function(e){if(!m.contains(e.target)&&e.target!==btn)m.classList.remove('show');});
+    $('tmResetAll').addEventListener('click',function(){
+      m.classList.remove('show');
+      if(confirm('Sab data delete karna hai?')){
+        try{localStorage.removeItem(LINK_KEY);localStorage.removeItem(HIDE_KEY);localStorage.removeItem(PHOTO_KEY);}catch(e){}
+        renderPhoto();renderCmdList();
+        toast('Reset complete ✓','success');
+      }
+    });
+  }
+
+  function init(){
+    renderPhoto();
+    renderCmdList();
+    bindPhoto();
+    bindLinks();
+    bindHide();
+    bindGen();
+    bindQuick();
+    bindSearch();
+    bindTabs();
+    bindMenu();
+    console.log('Total commands:',CMDS.length);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+  else init();
+})();
+</script>
+</body>
+</html>
